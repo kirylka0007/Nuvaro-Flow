@@ -12,7 +12,7 @@ const NAV_ITEMS = [
   { icon: Bell,            label: 'Alerts', active: false },
 ]
 
-export default function Sidebar({ connected }: { connected: boolean }) {
+export default function Sidebar({ connected, onAiClick }: { connected: boolean; onAiClick?: () => void }) {
   return (
     <aside className="fixed left-0 top-0 h-screen w-[72px] flex flex-col items-center py-4 z-40"
       style={{ background: '#060D1A', borderRight: '1px solid rgba(30,127,216,0.15)' }}>
@@ -31,6 +31,7 @@ export default function Sidebar({ connected }: { connected: boolean }) {
             style={active
               ? { background: 'rgba(30,127,216,0.18)', borderLeft: '2px solid #00D4FF' }
               : undefined}
+            onClick={label === 'AI Insights' ? onAiClick : undefined}
             onMouseEnter={e => { if (!active) (e.currentTarget as HTMLDivElement).style.background = 'rgba(30,127,216,0.08)' }}
             onMouseLeave={e => { if (!active) (e.currentTarget as HTMLDivElement).style.background = '' }}
           >

@@ -5,8 +5,16 @@ import { runAnalysis } from '@/lib/process-miner'
 import { generateInsights } from '@/lib/ai-explainer'
 import type { AnalysisResult } from '@/lib/types'
 
-export async function POST() {
+export async function POST(request: Request) {
   const session = await getSession()
+
+  let businessContext: string | undefined
+  try {
+    const body = await request.json()
+    if (typeof body?.businessContext === 'string') businessContext = body.businessContext
+  } catch {
+    // No body / not JSON — fine, businessContext stays undefined
+  }
 
   if (!session.accessToken || !session.refreshToken || !session.tenantId) {
     return Response.json({ error: 'Not authenticated' }, { status: 401 })
@@ -36,13 +44,24 @@ export async function POST() {
     const events = buildEventLog(invoices, histories)
     const summary = summariseEvents(events)
     const processMining = runAnalysis(events)
-    const aiReport = await generateInsights(processMining, summary)
+
+    // Insights are non-fatal: if the AI call fails, still return the analysis
+    // with charts and surface the reason so the UI can show it.
+    let aiInsights: AnalysisResult['aiInsights'] = { headline: '', recommendations: [] }
+    let insightsError: string | undefined
+    try {
+      aiInsights = await generateInsights(processMining, summary, businessContext)
+    } catch (err) {
+      insightsError = err instanceof Error ? err.message : 'AI insights failed'
+      console.error('[analyse] insights generation failed:', err)
+    }
 
     const result: AnalysisResult = {
       events,
       summary,
       processMining,
-      aiReport,
+      aiInsights,
+      insightsError,
       analysedAt: new Date().toISOString(),
     }
 
