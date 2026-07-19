@@ -110,6 +110,7 @@ export default function Dashboard({ tenantName, demo }: { tenantName?: string; d
           analysedAt={result?.analysedAt}
           loading={loading}
           onRefresh={handleRefresh}
+          demo={demo}
         />
 
         {/* Error banner */}
@@ -123,7 +124,7 @@ export default function Dashboard({ tenantName, demo }: { tenantName?: string; d
         )}
 
         {/* Business context — feeds recommendations + chat */}
-        {!loading && (
+        {!loading && !demo && (
           <BusinessContext value={businessContext} onSave={handleSaveContext} busy={loading} />
         )}
 

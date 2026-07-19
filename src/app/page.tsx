@@ -8,8 +8,9 @@ export default async function Page({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   // Demo mode renders sample data with no Xero connection, so the dashboard can
-  // be shown or deployed publicly without an authenticated org.
-  const demo = (await searchParams).demo === '1'
+  // be shown or deployed publicly without an authenticated org. DEMO_MODE=1
+  // makes a whole deployment demo-only, so any URL works for a public link.
+  const demo = process.env.DEMO_MODE === '1' || (await searchParams).demo === '1'
   if (demo) return <Dashboard demo />
 
   const session = await getSession()
