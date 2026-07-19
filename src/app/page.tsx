@@ -13,7 +13,15 @@ export default async function Page({
   const demo = process.env.DEMO_MODE === '1' || (await searchParams).demo === '1'
   if (demo) return <Dashboard demo />
 
-  const session = await getSession()
+  // A missing/short SESSION_SECRET makes iron-session throw. Treat that as
+  // "not signed in" rather than crashing the page with a 500.
+  let session
+  try {
+    session = await getSession()
+  } catch {
+    redirect('/connect')
+  }
+
   if (!session.accessToken) {
     redirect('/connect')
   }

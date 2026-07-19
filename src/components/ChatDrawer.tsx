@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { X, Send, MessageSquare } from 'lucide-react'
 import type { AiInsights, EventSummary, ProcessMiningResult, Recommendation, Severity } from '@/lib/types'
+import { DEMO_CHAT_REPLIES, DEMO_CHAT_FALLBACK } from '@/lib/demo-data'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -19,6 +20,7 @@ interface ChatDrawerProps {
   }
   businessContext?: string
   seedRecommendation?: Recommendation
+  demo?: boolean
 }
 
 const SEVERITY_COLOURS: Record<Severity, string> = {
@@ -32,7 +34,7 @@ function highlightMoney(text: string) {
   return text.replace(/(£[\d,\.]+)/g, '<span style="color:#00D4FF;font-weight:600">$1</span>')
 }
 
-export default function ChatDrawer({ open, onClose, context, businessContext, seedRecommendation }: ChatDrawerProps) {
+export default function ChatDrawer({ open, onClose, context, businessContext, seedRecommendation, demo }: ChatDrawerProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState(false)
@@ -81,6 +83,27 @@ export default function ChatDrawer({ open, onClose, context, businessContext, se
     // Add placeholder assistant message
     setMessages(prev => [...prev, { role: 'assistant', content: '' }])
 
+    // Demo mode never calls the API — replay a pre-written reply so the public
+    // demo needs no API key and costs nothing to run.
+    if (demo) {
+      const reply = (seedRecommendation && DEMO_CHAT_REPLIES[seedRecommendation.id]) || DEMO_CHAT_FALLBACK
+      const words = reply.split(' ')
+      for (let i = 0; i < words.length; i++) {
+        await new Promise(r => setTimeout(r, 18))
+        const chunk = (i === 0 ? '' : ' ') + words[i]
+        setMessages(prev => {
+          const next = [...prev]
+          const last = next[next.length - 1]
+          if (last?.role === 'assistant') {
+            next[next.length - 1] = { ...last, content: last.content + chunk }
+          }
+          return next
+        })
+      }
+      setStreaming(false)
+      return
+    }
+
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -126,7 +149,7 @@ export default function ChatDrawer({ open, onClose, context, businessContext, se
     } finally {
       setStreaming(false)
     }
-  }, [context, businessContext, seedRecommendation])
+  }, [context, businessContext, seedRecommendation, demo])
 
   const handleSend = useCallback(() => {
     const text = input.trim()
@@ -280,7 +303,9 @@ export default function ChatDrawer({ open, onClose, context, businessContext, se
             </button>
           </div>
           <p className="mt-1.5 text-[10px] text-center" style={{ color: '#334155' }}>
-            Answers grounded in your Xero process data
+            {demo
+              ? 'Demo — replies are pre-written. Live version answers from your Xero data.'
+              : 'Answers grounded in your Xero process data'}
           </p>
         </div>
       </div>

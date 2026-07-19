@@ -200,6 +200,7 @@ export default function Dashboard({ tenantName, demo }: { tenantName?: string; d
           context={chatContext}
           businessContext={businessContext}
           seedRecommendation={seedRec}
+          demo={demo}
         />
       )}
     </div>

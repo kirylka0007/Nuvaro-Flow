@@ -13,6 +13,13 @@ interface ChatRequest {
 }
 
 export async function POST(request: Request) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return Response.json(
+      { error: 'Chat is not configured on this deployment (no ANTHROPIC_API_KEY).' },
+      { status: 503 },
+    )
+  }
+
   let body: ChatRequest
   try {
     body = await request.json()

@@ -231,3 +231,33 @@ export const DEMO_ANALYSIS: AnalysisResult = {
 
   analysedAt: '2026-06-21T21:08:00.000Z',
 }
+
+/**
+ * Canned chat replies for demo mode.
+ *
+ * The public demo runs with no ANTHROPIC_API_KEY, so the chat never calls the
+ * API — it replays these instead. Keyed by recommendation id, with a fallback
+ * for free-text questions.
+ */
+export const DEMO_CHAT_REPLIES: Record<string, string> = {
+  'stuck-at-created':
+    'Four invoices are sitting at Created and were never approved: INV-0007 (£2,142), INV-0012 (£1,850), INV-0015 (£2,475) and INV-0018 (£2,100) — £8,567 in total, about 22% of your book.\n\nWhat the data shows: each of these has a Created event and nothing after it. No approval, no void. They are not mistakes that were cancelled — they were simply left.\n\nWhy it matters: an unapproved invoice in Xero has not been issued. The customer has never been asked to pay, so none of that £8,567 can arrive. It is also probably sitting in your expected revenue, which makes your forecast look healthier than it is.\n\nWhat I would do this week:\n1. Open the four and decide: genuine, duplicate, or draft raised in error.\n2. Approve and send the genuine ones today — that is the fastest cash in this whole analysis.\n3. Void the rest so they stop inflating your numbers.\n4. Give one person a weekly job of clearing the Created queue, so it never builds up again.',
+
+  'no-send-or-payment-events':
+    'Your event log only ever contains three activities: Created, Approved and Voided. There is no Sent, Paid or Payment Allocated event anywhere across all 18 invoices.\n\nWhat that means in practice: the analysis can see an invoice being raised and approved, then it goes dark. I cannot tell you how long customers take to pay, which invoices are overdue, or whether anyone chased them — because none of that is being recorded.\n\nThe most likely cause is that invoices are approved in Xero but then sent some other way (attached to an email, exported to PDF), and payments are reconciled in bulk rather than allocated against the invoice.\n\nWhat to change: send invoices through Xero itself, and allocate payments against them when they land. Do that for one month and this dashboard can start answering the question you actually care about — how many days it takes to get paid, and who is slowest.',
+
+  'voided-after-approval':
+    'Two invoices were voided out of 18, which is an 11% void rate. For a clean process you would expect low single digits.\n\nThe two are INV-0009 (£1,995) and INV-0014 (£2,288) — £4,283 combined. The important detail is that one was voided after it had already been approved, which means it passed your checks and was still wrong.\n\nThat pattern usually points to one of three things: the amount was wrong, it duplicated another invoice, or the customer disputed it after the fact.\n\nWhat I would do: look at those two specifically and find out which of the three it was. Then require a reason code on every void going forward. It costs nothing, and it turns "we void things sometimes" into data you can act on — after a couple of months you will see whether it is a pricing problem, a data-entry problem, or a customer problem.',
+
+  'cycle-times-zero':
+    'Every invoice in this dataset shows a cycle time of 0 days — mean and maximum both zero. That is not a real result.\n\nWhat is happening: for each invoice, every event carries the same date. So when the analysis subtracts the created timestamp from the approved timestamp, it gets zero every time. Either Xero is exporting dates without times, or all activity genuinely happens within the same day and the resolution is too coarse to see it.\n\nWhy you should care: cycle time is the measure that tells you where work stalls. Without it, the bottleneck chart has nothing to show, and a delay in approval is invisible until someone notices the cash has not arrived.\n\nFix: confirm the event export includes full date-times, not just dates. Once real timestamps flow through, re-run the analysis and the bottleneck view becomes the most useful screen here.',
+
+  'approval-before-creation':
+    'One invoice — INV-0007, £2,142 — has an Approved event timestamped before its Created event. In a normal Xero workflow that sequence cannot happen.\n\nThere are two plausible explanations. The mundane one is a data-entry or timestamp error: the invoice was backdated, or entered retrospectively after the work was approved verbally. The one worth ruling out is that someone has permissions letting them approve outside the normal flow.\n\nEither way it matters because your audit trail is the thing you fall back on in a dispute, and right now it contains a sequence that is not possible. Worth noting this is the same invoice sitting unapproved in the Getting Paid section, so it deserves attention regardless.\n\nWhat to do: open that invoice\'s history in Xero, see who touched it and when, correct the record, and check who currently holds approval rights.',
+
+  'core-flow-healthy':
+    'Twelve of your 18 invoices — 67% — follow the straight Created to Approved path with a rework rate of just 5.6%. That is a genuinely clean core process.\n\nThis matters for how you read everything else on this page. The problems flagged above are not symptoms of a broken system; they are a small set of exceptions sitting around a workflow that works. Six invoices need attention, not eighteen.\n\nSo my advice is the opposite of a redesign: leave the main approval flow alone. Put your effort into clearing the four stuck invoices and understanding the two voids. If you fix those six and start recording when invoices are sent and paid, this process would look strong.',
+}
+
+export const DEMO_CHAT_FALLBACK =
+  'This is a demo running on sample data, so live AI chat is switched off here — the replies you see are pre-written.\n\nIn the full version this is a real conversation with Claude, grounded in your actual Xero analysis: it can only cite figures that appear in your data, and it will tell you when the data cannot answer a question rather than guessing.\n\nTry the "Dig deeper" button on any recommendation card to see a worked example.'
